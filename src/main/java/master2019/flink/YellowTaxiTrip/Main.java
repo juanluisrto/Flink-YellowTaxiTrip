@@ -25,9 +25,9 @@ public class Main {
         // get input data
         DataStream<String> text;
         // read the text file from given input path
-        text = env.readTextFile(params.get("input"));
-        //String p = "/Users/juanluisrto/Documents/Universidad/UPM/'Cloud Computing'/YellowTaxiTrip/yellow_tripdata_2019_06.csv";
-        //text = env.readTextFile(p);
+        //text = env.readTextFile(params.get("input"));
+        String p = "/Users/juanluisrto/Documents/Universidad/UPM/'Cloud Computing'/YellowTaxiTrip/yellow_tripdata_2019_06.csv";
+        text = env.readTextFile(p);
 
         SingleOutputStreamOperator<Tuple18<Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>> mapStream = text.
                 map(new MapFunction<String, Tuple18<Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>>(){
