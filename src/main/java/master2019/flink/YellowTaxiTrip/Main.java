@@ -11,12 +11,26 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import java.sql.Timestamp;
 import org.apache.flink.api.common.functions.MapFunction;
 
+
+/*
+Commands to run prior to execution
+
+//Initialize cluster
+/usr/local/Cellar/apache-flink/1.9.1/libexec/libexec/start-cluster.sh
+
+//compile project
+mvn clean package
+
+//run flink
+flink run -c master2019.flink.YellowTaxiTrip.Main target/YellowTaxiTrip-1.0-SNAPSHOT.jar --input /Users/juanluisrto/Documents/Universidad/UPM/'Cloud Computing'/YellowTaxiTrip/yellow_tripdata_2019_06.csv
+ */
+
 public class Main {
 
     public static final String OUT_JFK_ALARMS = "jfkAlarms.csv";
     public static final String OUT_LARGE_TRIPS = "largeTrips.csv";
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws Exception {
 
         final ParameterTool params = ParameterTool.fromArgs(args);
         // set up the execution environment
@@ -26,7 +40,7 @@ public class Main {
         DataStream<String> text;
         // read the text file from given input path
         //text = env.readTextFile(params.get("input"));
-        String p = "/Users/juanluisrto/Documents/Universidad/UPM/'Cloud Computing'/YellowTaxiTrip/yellow_tripdata_2019_06.csv";
+        String p = "/Users/juanluisrto/Documents/Universidad/UPM/Cloud Computing/YellowTaxiTrip/yellow_tripdata_2019_06.csv";
         text = env.readTextFile(p);
 
         SingleOutputStreamOperator<Tuple18<Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>> mapStream = text.
@@ -59,6 +73,7 @@ public class Main {
                     }
                 });
 
-
+        // execute program
+        env.execute("Main");
     }
 }
