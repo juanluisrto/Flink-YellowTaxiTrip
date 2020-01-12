@@ -47,9 +47,9 @@ public class Main {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(params);
 
-        SingleOutputStreamOperator<Tuple18<Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>> mapStream = text.
-                map(new MapFunction<String, Tuple18<Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>>(){
-                    public Tuple18 <Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>
+        SingleOutputStreamOperator<Event> mapStream = text.
+                map(new MapFunction<String, Event>(){
+                    public Event
                         map(String in){
                         String[] fieldArray = in.split(",");
                         Tuple18<Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>
@@ -73,7 +73,7 @@ public class Main {
                                 Float.parseFloat(fieldArray[16]),    //total_amount
                                 Float.parseFloat(fieldArray[17])    //congestion_surcharge.
                                 );
-                        return out;
+                        return new Event(out);
                     }
                 });
 
@@ -82,11 +82,19 @@ public class Main {
         if (params.has("output")) {
             result.writeAsText(params.get("output"));
         }
-
         env.execute("Main");
-       
-    
+    }
+}
+
+class Event {
+
+    Tuple18<Integer, Timestamp, Timestamp, Integer, Float, Integer, String, Integer, Integer, Integer, Float, Float, Float, Float, Float, Float, Float, Float> tuple18;
+
+    public Event(Tuple18<Integer, Timestamp, Timestamp, Integer, Float, Integer, String, Integer, Integer, Integer, Float, Float, Float, Float, Float, Float, Float, Float> t) {
+        tuple18 = t;
     }
 
- 
+    public Tuple18<Integer, Timestamp, Timestamp, Integer, Float, Integer, String, Integer, Integer, Integer, Float, Float, Float, Float, Float, Float, Float, Float> getTuple(){
+        return tuple18;
+    }
 }
