@@ -47,16 +47,16 @@ public class Main {
         // make parameters available in the web interface
         env.getConfig().setGlobalJobParameters(params);
 
-        SingleOutputStreamOperator<Tuple18<Integer, Long,Long,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>> mapStream = text.
-                map(new MapFunction<String, Tuple18<Integer, Long,Long,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>>(){
-                    public Tuple18 <Integer, Long,Long,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>
+        SingleOutputStreamOperator<Tuple18<Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>> mapStream = text.
+                map(new MapFunction<String, Tuple18<Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>>(){
+                    public Tuple18 <Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>
                         map(String in){
                         String[] fieldArray = in.split(",");
-                        Tuple18<Integer, Long,Long,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>
+                        Tuple18<Integer, Timestamp,Timestamp,Integer,Float,Integer,String,Integer,Integer,Integer,Float,Float,Float,Float,Float,Float,Float,Float>
                             out = new Tuple18(
                                 Integer.parseInt(fieldArray[0]),    //VendorID
-                                new Long(Timestamp.valueOf(fieldArray[1]).getTime()),   //tpep_pickup_datetime
-                                new Long(Timestamp.valueOf(fieldArray[2]).getTime()),   //tpep_dropoff_datetime
+                                Timestamp.valueOf(fieldArray[1]),   //tpep_pickup_datetime
+                                Timestamp.valueOf(fieldArray[2]),   //tpep_dropoff_datetime
                                 Integer.parseInt(fieldArray[3]),    //passenger_count
                                 Float.parseFloat(fieldArray[4]),    //trip_distance
                                 Integer.parseInt(fieldArray[5]),    //RatecodeID,
@@ -77,7 +77,7 @@ public class Main {
                     }
                 });
 
-        SingleOutputStreamOperator<Tuple4<Integer,Long,Long,Integer>> result = JFKAlarms.airportTrips(mapStream);
+        SingleOutputStreamOperator<Tuple4<Integer,Timestamp,Timestamp,Integer>> result = JFKAlarms.airportTrips(mapStream);
         
         if (params.has("output")) {
             result.writeAsText(params.get("output"));
