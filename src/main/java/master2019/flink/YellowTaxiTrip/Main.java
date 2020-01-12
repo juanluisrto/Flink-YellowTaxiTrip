@@ -1,11 +1,11 @@
 package master2019.flink.YellowTaxiTrip;
 
 
-import org.apache.flink.api.java.io.CsvReader;
 import org.apache.flink.api.java.tuple.Tuple18;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -15,6 +15,10 @@ import java.sql.Date;
 import java.sql.Timestamp;
 
 import org.apache.flink.api.common.functions.MapFunction;
+
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+
 
 
 /*
@@ -35,6 +39,7 @@ public class Main {
     public static final String OUT_JFK_ALARMS = "jfkAlarms.csv";
     public static final String OUT_LARGE_TRIPS = "largeTrips.csv";
 
+
     public static void main(String[] args) throws Exception {
 
         final ParameterTool params = ParameterTool.fromArgs(args);
@@ -44,9 +49,10 @@ public class Main {
         // get input data
         DataStream<String> text;
         // read the text file from given input path
-        //text = env.readTextFile(params.get("input"));
-        String p = "/Users/juanluisrto/Documents/Universidad/UPM/Cloud Computing/YellowTaxiTrip/yellow_tripdata_2019_06.csv";
-        text = env.readTextFile(p);
+        String p = "/Users/juanluisrto/Documents/Universidad/UPM/Cloud Computing/YellowTaxiTrip/yellow_tripdata_2019_06mini.csv";
+        String o = "/Users/juanluisrto/Documents/Universidad/UPM/Cloud Computing/YellowTaxiTrip/";
+        //text = env.readTextFile(p);
+        text = env.readTextFile(params.get("input"));
 
         SingleOutputStreamOperator<Event> mapStream = text.
                 map(new MapFunction<String, Event>() {
@@ -77,7 +83,9 @@ public class Main {
                     }
                 });
 
-        LargeTrips.run(mapStream);
+        LargeTrips.initializer();
+        SingleOutputStreamOperator<Tuple5<Integer, Date, Integer, Timestamp, Timestamp>> outputLargeTrips = LargeTrips.run(mapStream);
+        outputLargeTrips.writeAsText(params.get("output") + OUT_LARGE_TRIPS, FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 
         // execute program
         env.execute("Main");
@@ -96,37 +104,5 @@ class Event {
 }
 
 
-class LargeTripsInputEvent {
 
-    Tuple3<Integer, Timestamp, Timestamp> tuple3; //VendorID, tpep_pickup_datetime, tpep_dropoff_datetime
-    boolean isLong;                               // determines if trip is longer than 20 minutes
-    int count;                                    // used to aggregate trips in the reduce step.
 
-    public LargeTripsInputEvent(Tuple3<Integer, Timestamp, Timestamp> t){
-        tuple3 = t;
-        isLong = tripDuration() >= 20;
-        count = isLong ? 1 : 0;
-    }
-
-    public int tripDuration(){
-        long milliseconds = this.tuple3.f1.getTime() - this.tuple3.f2.getTime();
-        int minutes = ((int) (milliseconds / 1000) % 3600) / 60;
-        return minutes;
-    }
-}
-
-class LargeTripsOutputEvent {
-
-    //VendorID, day, numberOfTrips, Timestamp first trip, Timestamp last trip
-
-    Tuple5<Integer, Date, Integer, Timestamp, Timestamp> tuple5;
-
-    public LargeTripsOutputEvent(LargeTripsInputEvent t){
-        tuple5= new Tuple5(
-                t.tuple3.f0,                       //VendorID
-                new Date(t.tuple3.f1.getTime()),   //day
-                t.count,                           //numberOfTrips
-                t.tuple3.f1,                       //Timestamp first trip
-                t.tuple3.f2);                      //Timestamp last trip
-    }
-}
