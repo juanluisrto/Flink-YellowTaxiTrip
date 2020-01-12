@@ -3,12 +3,15 @@ package master2019.flink.YellowTaxiTrip;
 
 import org.apache.flink.api.java.io.CsvReader;
 import org.apache.flink.api.java.tuple.Tuple18;
+import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 import org.apache.flink.api.common.functions.MapFunction;
@@ -74,6 +77,8 @@ public class Main {
                     }
                 });
 
+        LargeTrips.run(mapStream);
+
         // execute program
         env.execute("Main");
     }
@@ -88,4 +93,40 @@ class Event {
         tuple18 = t;
     }
 
+}
+
+
+class LargeTripsInputEvent {
+
+    Tuple3<Integer, Timestamp, Timestamp> tuple3; //VendorID, tpep_pickup_datetime, tpep_dropoff_datetime
+    boolean isLong;                               // determines if trip is longer than 20 minutes
+    int count;                                    // used to aggregate trips in the reduce step.
+
+    public LargeTripsInputEvent(Tuple3<Integer, Timestamp, Timestamp> t){
+        tuple3 = t;
+        isLong = tripDuration() >= 20;
+        count = isLong ? 1 : 0;
+    }
+
+    public int tripDuration(){
+        long milliseconds = this.tuple3.f1.getTime() - this.tuple3.f2.getTime();
+        int minutes = ((int) (milliseconds / 1000) % 3600) / 60;
+        return minutes;
+    }
+}
+
+class LargeTripsOutputEvent {
+
+    //VendorID, day, numberOfTrips, Timestamp first trip, Timestamp last trip
+
+    Tuple5<Integer, Date, Integer, Timestamp, Timestamp> tuple5;
+
+    public LargeTripsOutputEvent(LargeTripsInputEvent t){
+        tuple5= new Tuple5(
+                t.tuple3.f0,                       //VendorID
+                new Date(t.tuple3.f1.getTime()),   //day
+                t.count,                           //numberOfTrips
+                t.tuple3.f1,                       //Timestamp first trip
+                t.tuple3.f2);                      //Timestamp last trip
+    }
 }
